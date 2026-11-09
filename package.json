@@ -1,0 +1,80 @@
+{
+  "name": "agmc-payment-request-mgmt",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@cap-js/postgres": "^3",
+    "@cap-js/sdm": "^1.11.0",
+    "@sap-cloud-sdk/http-client": "^4.9.1",
+    "@sap-cloud-sdk/resilience": "^4.9.1",
+    "@sap/cds": "^10",
+    "@sap/xssec": "^4"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^3",
+    "@sap/cds-dk": "^10",
+    "@sap/dev-cap-tools": "^1.31.0",
+    "cds-plugin-ui5": "^0.17.0",
+    "mbt": "^1.2.49",
+    "rimraf": "^5.0.5"
+  },
+  "scripts": {
+    "start": "cds-serve",
+    "watch-payment_request_list": "cds watch --open com.fiori.paymentrequestlist/index.html?sap-ui-xx-viewCache=false --livereload false",
+    "undeploy": "cf undeploy agmc-payment-request-mgmt --delete-services --delete-service-keys --delete-service-brokers",
+    "build": "rimraf resources mta_archives && mbt build --mtar archive",
+    "deploy": "cf deploy mta_archives/archive.mtar --retries 1"
+  },
+  "private": true,
+  "cds": {
+    "requires": {
+      "bpa": {
+        "kind": "rest",
+        "definitionId": "ap10.abhit-playground.paymentapproval.paymentApproval",
+        "[development]": {
+          "credentials": {
+            "url": "http://localhost:4004/mock-bpa"
+          }
+        },
+        "[production]": {
+          "credentials": {
+            "destination": "sap_process_automation_service"
+          }
+        }
+      },
+      "cpi": {
+        "kind": "rest",
+        "[development]": {
+          "credentials": {
+            "url": "http://localhost:4004/mock-cpi"
+          }
+        },
+        "[production]": {
+          "credentials": {
+            "destination": "AGMC_CPI_PAYMENT_APPROVED"
+          }
+        }
+      },
+      "[development]": {
+        "attachments": {
+          "kind": "db",
+          "impl": "@cap-js/attachments/srv/attachments/basic",
+          "scan": false
+        },
+        "malwareScanner": {
+          "model": "@cap-js/attachments/srv/malware-scanner/malwareScanner-mocked"
+        }
+      },
+      "[production]": {
+        "auth": "xsuaa"
+      },
+      "destinations": true
+    }
+  },
+  "workspaces": [
+    "app/*"
+  ],
+  "sapux": [
+    "app/payment_request_list"
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "info": {
+    "name": "AGMC Payment Request - Create (CPI -> CAP)",
+    "description": "POST /integration/PaymentRequests. Set baseUrl (local: http://localhost:4004). On BTP, use an OAuth 2.0 token from the XSUAA service key.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4004"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 - Vendor payment, TT, AED, 2 invoices",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/integration/PaymentRequests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "integration",
+            "PaymentRequests"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"PR-2001\",\n  \"vendorCode\": \"V2001\",\n  \"vendorName\": \"Emirates Steel Trading LLC\",\n  \"paymentAmount\": 48750,\n  \"currency_code\": \"AED\",\n  \"paymentDueDate\": \"2026-11-30\",\n  \"companyCode\": \"1000\",\n  \"costCentre\": \"CC100\",\n  \"glAccount\": \"400100\",\n  \"paymentMethod_code\": \"TT\",\n  \"paymentType_code\": \"VENDOR_PAYMENT\",\n  \"bankName\": \"Emirates NBD\",\n  \"iban\": \"AE070331234567890123456\",\n  \"bankAccountNo\": \"1012345678\",\n  \"swiftCode\": \"EBILAEAD\",\n  \"requestorName\": \"Ahmed Ali\",\n  \"requestorEmpId\": \"E1001\",\n  \"requestCreatedAt\": \"2026-11-06T08:30:00Z\",\n  \"items\": [\n    {\n      \"invoiceNumber\": \"INV-7001\",\n      \"invoiceDate\": \"2026-10-20\",\n      \"invoiceAmount\": 30000,\n      \"currency_code\": \"AED\"\n    },\n    {\n      \"invoiceNumber\": \"INV-7002\",\n      \"invoiceDate\": \"2026-10-25\",\n      \"invoiceAmount\": 18750,\n      \"currency_code\": \"AED\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "2 - Vendor payment, ACH, AED, 1 invoice",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/integration/PaymentRequests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "integration",
+            "PaymentRequests"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"PR-2002\",\n  \"vendorCode\": \"V2002\",\n  \"vendorName\": \"Al Futtaim Office Supplies\",\n  \"paymentAmount\": 12480.5,\n  \"currency_code\": \"AED\",\n  \"paymentDueDate\": \"2026-11-20\",\n  \"companyCode\": \"1000\",\n  \"costCentre\": \"CC200\",\n  \"glAccount\": \"400200\",\n  \"paymentMethod_code\": \"ACH\",\n  \"paymentType_code\": \"VENDOR_PAYMENT\",\n  \"bankName\": \"Abu Dhabi Commercial Bank\",\n  \"iban\": \"AE460030000123456789012\",\n  \"bankAccountNo\": \"1023456789\",\n  \"swiftCode\": \"ADCBAEAA\",\n  \"requestorName\": \"Fatima Hassan\",\n  \"requestorEmpId\": \"E1002\",\n  \"requestCreatedAt\": \"2026-11-06T09:00:00Z\",\n  \"items\": [\n    {\n      \"invoiceNumber\": \"INV-7101\",\n      \"invoiceDate\": \"2026-10-28\",\n      \"invoiceAmount\": 12480.5,\n      \"currency_code\": \"AED\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "3 - Vendor payment, TT, USD, 3 invoices",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/integration/PaymentRequests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "integration",
+            "PaymentRequests"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"PR-2003\",\n  \"vendorCode\": \"V2003\",\n  \"vendorName\": \"Global Machinery Inc.\",\n  \"paymentAmount\": 96300,\n  \"currency_code\": \"USD\",\n  \"paymentDueDate\": \"2026-12-05\",\n  \"companyCode\": \"1000\",\n  \"costCentre\": \"CC300\",\n  \"glAccount\": \"400300\",\n  \"paymentMethod_code\": \"TT\",\n  \"paymentType_code\": \"VENDOR_PAYMENT\",\n  \"bankName\": \"Mashreq Bank\",\n  \"iban\": \"AE320330000019876543210\",\n  \"bankAccountNo\": \"1034567890\",\n  \"swiftCode\": \"BOMLAEAD\",\n  \"requestorName\": \"Rahul Menon\",\n  \"requestorEmpId\": \"E1003\",\n  \"requestCreatedAt\": \"2026-11-06T09:30:00Z\",\n  \"items\": [\n    {\n      \"invoiceNumber\": \"GMI-55010\",\n      \"invoiceDate\": \"2026-10-10\",\n      \"invoiceAmount\": 40000,\n      \"currency_code\": \"USD\"\n    },\n    {\n      \"invoiceNumber\": \"GMI-55011\",\n      \"invoiceDate\": \"2026-10-15\",\n      \"invoiceAmount\": 36300,\n      \"currency_code\": \"USD\"\n    },\n    {\n      \"invoiceNumber\": \"GMI-55012\",\n      \"invoiceDate\": \"2026-10-22\",\n      \"invoiceAmount\": 20000,\n      \"currency_code\": \"USD\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "4 - Vendor payment, cheque, AED, 1 invoice",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/integration/PaymentRequests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "integration",
+            "PaymentRequests"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"PR-2004\",\n  \"vendorCode\": \"V2004\",\n  \"vendorName\": \"Desert Logistics FZE\",\n  \"paymentAmount\": 5250,\n  \"currency_code\": \"AED\",\n  \"paymentDueDate\": \"2026-11-15\",\n  \"companyCode\": \"1000\",\n  \"costCentre\": \"CC100\",\n  \"glAccount\": \"400150\",\n  \"paymentMethod_code\": \"CHQ\",\n  \"paymentType_code\": \"VENDOR_PAYMENT\",\n  \"bankName\": \"First Abu Dhabi Bank\",\n  \"iban\": \"AE210351234567890123456\",\n  \"bankAccountNo\": \"1045678901\",\n  \"swiftCode\": \"NBADAEAA\",\n  \"requestorName\": \"Sara Khan\",\n  \"requestorEmpId\": \"E1004\",\n  \"requestCreatedAt\": \"2026-11-06T10:00:00Z\",\n  \"items\": [\n    {\n      \"invoiceNumber\": \"DL-2026-0981\",\n      \"invoiceDate\": \"2026-11-01\",\n      \"invoiceAmount\": 5250,\n      \"currency_code\": \"AED\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "5 - Vendor advance, LC, AED, no invoices",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/integration/PaymentRequests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "integration",
+            "PaymentRequests"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"PR-2005\",\n  \"vendorCode\": \"V2005\",\n  \"vendorName\": \"Gulf Construction Materials LLC\",\n  \"paymentAmount\": 150000,\n  \"currency_code\": \"AED\",\n  \"paymentDueDate\": \"2026-12-15\",\n  \"companyCode\": \"1000\",\n  \"costCentre\": \"CC400\",\n  \"glAccount\": \"140100\",\n  \"paymentMethod_code\": \"LC\",\n  \"paymentType_code\": \"VENDOR_ADVANCE\",\n  \"bankName\": \"Dubai Islamic Bank\",\n  \"iban\": \"AE580240001234567890123\",\n  \"bankAccountNo\": \"1056789012\",\n  \"swiftCode\": \"DUIBAEAD\",\n  \"requestorName\": \"Omar Saeed\",\n  \"requestorEmpId\": \"E1005\",\n  \"requestCreatedAt\": \"2026-11-06T10:30:00Z\",\n  \"items\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

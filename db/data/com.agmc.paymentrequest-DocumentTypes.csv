@@ -1,0 +1,9 @@
+code;name;descr;allowedFormats;maxSizeMB
+INVOICE;Vendor Tax Invoice;VAT-compliant invoice from the vendor;pdf,jpg,png;10
+PO;Approved Purchase Order (PO);Approved purchase order;pdf,jpg,png;10
+GRN;Goods Receipt / Service Confirmation;Goods receipt or service confirmation;pdf,jpg,png;10
+THREE_WAY_MATCH;Three-Way Match Confirmation;Confirmation that PO, goods receipt and invoice match;pdf,xlsx;10
+APG;Bank Guarantee / LC;Bank guarantee or letter of credit;pdf;15
+CONTRACT;Contract Reference;Contract or agreement with the vendor (advance payments);pdf;15
+DECLARATION;Requestor Declaration / Certification;Declaration or certification by the requestor;pdf;5
+OTHER;Other Supporting Document;Any other supporting document;pdf,jpg,png,xlsx;10

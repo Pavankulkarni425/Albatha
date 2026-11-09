@@ -1,0 +1,10 @@
+code;name;descr;criticality;editable;sequence
+NEW;Ready;All mandatory documents available, ready to start the workflow;0;true;10
+DOC_PENDING;Document Pending;Mandatory documents are missing;2;true;20
+IN_APPROVAL;In Approval;Approval workflow is running;2;false;30
+RETURN;Return;Sent back by an approver for correction;1;true;40
+APPROVED;Approved;All approval levels completed;3;false;50
+SENT_TO_BANK;Sent to Bank;Payment transmitted to the bank;2;false;60
+SETTLED;Settled;Payment confirmed by the bank;5;false;70
+REJECTED;Rejected;Rejected by an approver (to be confirmed with client);1;false;80
+WF_ERROR;Workflow Error;Workflow could not be started - retry possible;1;true;90

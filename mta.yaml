@@ -1,0 +1,153 @@
+_schema-version: 3.3.0
+ID: agmc-payment-request-mgmt
+description: AGMC Payment Request Management
+version: 1.0.0
+modules:
+- name: agmc-payment-request-mgmt-srv
+  type: nodejs
+  path: gen/srv
+  requires:
+  - name: uaa_agmc-payment-request-mgmt
+  - name: agmc-payment-request-mgmt-postgres
+  - name: agmc-payment-request-mgmt-destination
+  - name: agmc-payment-request-mgmt-sdm
+  properties:
+    REPOSITORY_ID: agmc-payment-request-docs-v2
+    APP_BASE_URL: https://abhit-playground.launchpad.cfapps.ap10.hana.ondemand.com/417d9310-3d30-499a-954f-d92ca1f043b9.agmcpayreqmgmtapprouter.comfioripaymentrequestlist-0.0.1
+  provides:
+  - name: srv-api
+    properties:
+      srv-url: ${default-url}
+  parameters:
+    buildpack: nodejs_buildpack
+    instances: 1
+  build-parameters:
+    builder: npm-ci
+- name: agmc-payment-request-mgmt-postgres-deployer
+  type: nodejs
+  path: gen/pg
+  requires:
+  - name: agmc-payment-request-mgmt-postgres
+  parameters:
+    buildpack: nodejs_buildpack
+    no-route: true
+    no-start: true
+    tasks:
+    - command: npm start
+      name: deploy-to-postgresql
+- name: agmc-payment-request-mgmt-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: agmc-payment-request-mgmt-destination
+    parameters:
+      content-target: true
+  - name: agmc-payment-request-mgmt_html_repo_host
+    parameters:
+      service-key:
+        name: agmc-payment-request-mgmt_html_repo_host-key
+  - name: uaa_agmc-payment-request-mgmt
+    parameters:
+      service-key:
+        name: uaa_agmc-payment-request-mgmt-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: agmc_pay_req_mgmt_approuter_agmc_payment_request_mgmt_html_repo_host
+          ServiceInstanceName: agmc-payment-request-mgmt-html5-app-host-service
+          ServiceKeyName: agmc-payment-request-mgmt_html_repo_host-key
+          sap.cloud.service: agmc.pay.req.mgmt.approuter
+        - Authentication: OAuth2UserTokenExchange
+          Name: agmc_pay_req_mgmt_approuter_uaa_agmc_payment_request_mgmt
+          ServiceInstanceName: agmc-payment-request-mgmt-xsuaa-service
+          ServiceKeyName: uaa_agmc-payment-request-mgmt-key
+          sap.cloud.service: agmc.pay.req.mgmt.approuter
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: agmc-payment-request-mgmt-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: agmc-payment-request-mgmt_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - comfioripaymentrequestlist.zip
+      name: comfioripaymentrequestlist
+      target-path: resources/
+- name: comfioripaymentrequestlist
+  type: html5
+  path: app/payment_request_list
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: agmc-payment-request-mgmt-destination
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            HTML5.DynamicDestination: true
+            HTML5.ForwardAuthToken: true
+            Name: srv-api
+            ProxyType: Internet
+            Type: HTTP
+            URL: ~{srv-api/srv-url}
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+    service: destination
+    service-plan: lite
+  requires:
+  - name: srv-api
+- name: agmc-payment-request-mgmt_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: agmc-payment-request-mgmt-html5-app-host-service
+    service-plan: app-host
+- name: uaa_agmc-payment-request-mgmt
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      oauth2-configuration:
+        redirect-uris:
+        - https://*.hana.ondemand.com/**
+      tenant-mode: dedicated
+      xsappname: agmc-payment-request-mgmt-${space}
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: agmc-payment-request-mgmt-xsuaa-service
+    service-plan: application
+- name: agmc-payment-request-mgmt-postgres
+  type: org.cloudfoundry.existing-service
+  parameters:
+    service-name: Postgres-Dev-Free
+- name: agmc-payment-request-mgmt-sdm
+  type: org.cloudfoundry.existing-service
+  parameters:
+    service-name: agmc-payment-request-mgmt-sdm
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm ci
+    - npx cds build --production

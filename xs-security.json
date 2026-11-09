@@ -1,0 +1,30 @@
+{
+  "xsappname": "agmc-payment-request-mgmt",
+  "tenant-mode": "dedicated",
+  "description": "Security profile of called application",
+  "scopes": [
+    {
+      "name": "uaa.user",
+      "description": "UAA"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Token_Exchange",
+      "description": "UAA",
+      "scope-references": [
+        "uaa.user"
+      ]
+    }
+  ],
+  "attributes": [],
+  "role-collections": [
+    {
+      "name": "AGMC_PaymentRequest_User",
+      "description": "Payment request users incl. document access",
+      "role-template-references": [
+        "$XSSERVICENAME(agmc-payment-request-mgmt-sdm).SDM_User"
+      ]
+    }
+  ]
+}

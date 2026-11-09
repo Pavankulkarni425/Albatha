@@ -1,0 +1,314 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "AGMC Payment Request - BPA callbacks",
+    "description": "Calls from SAP Build Process Automation to CAP. Destination URL = CAP srv root URL.",
+    "version": ""
+  },
+  "x-odata-version": "4.01",
+  "x-sap-shortText": "Use the Core.Description annotation on your CDS service to provide a meaningful short text.",
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Company Codes"
+    },
+    {
+      "name": "Currencies"
+    },
+    {
+      "name": "Payment Methods"
+    },
+    {
+      "name": "Payment Request Items"
+    },
+    {
+      "name": "Payment Requests"
+    },
+    {
+      "name": "Payment Statuses"
+    },
+    {
+      "name": "Payment Types"
+    }
+  ],
+  "paths": {
+    "/integration/updateWorkflowStatus": {
+      "post": {
+        "summary": "Invokes action updateWorkflowStatus",
+        "tags": [
+          "Service Operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/error"
+          }
+        },
+        "requestBody": {
+          "description": "Action parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "btpPaymentRef": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "stepNo": {
+                    "type": "integer",
+                    "format": "int32",
+                    "nullable": true
+                  },
+                  "stepName": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "approverId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "approverName": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "decision": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "comments": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "bpaTaskId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "isFinalStep": {
+                    "type": "boolean",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integration/getAttachedDocuments": {
+      "post": {
+        "summary": "Invokes action getAttachedDocuments",
+        "tags": [
+          "Service Operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/IntegrationService.DocumentList"
+                    }
+                  ],
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/error"
+          }
+        },
+        "requestBody": {
+          "description": "Action parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "btpPaymentRef": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "IntegrationService.AttachedDocument": {
+        "title": "AttachedDocument",
+        "type": "object",
+        "properties": {
+          "attachmentId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "01234567-89ab-cdef-0123-456789abcdef",
+            "nullable": true
+          },
+          "docType": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true
+          },
+          "docTypeName": {
+            "type": "string",
+            "maxLength": 111,
+            "nullable": true
+          },
+          "requirement": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true
+          },
+          "fileName": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          },
+          "mimeType": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "uploadedBy": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2017-04-13T15:51:04.0000000Z",
+            "nullable": true
+          },
+          "viewUrl": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          }
+        }
+      },
+      "IntegrationService.DocumentList": {
+        "title": "DocumentList",
+        "type": "object",
+        "properties": {
+          "btpPaymentRef": {
+            "type": "string",
+            "maxLength": 30,
+            "nullable": true
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 5000,
+            "nullable": true
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/IntegrationService.AttachedDocument"
+                }
+              ],
+              "nullable": true
+            }
+          }
+        }
+      },
+      "error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "innererror": {
+                "type": "object",
+                "description": "The structure of this object is service-specific"
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "error": {
+        "description": "Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

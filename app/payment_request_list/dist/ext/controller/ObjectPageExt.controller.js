@@ -1,0 +1,2 @@
+sap.ui.define(["sap/ui/core/mvc/ControllerExtension"],function(e){"use strict";return e.extend("com.fiori.paymentrequestlist.ext.controller.ObjectPageExt",{override:{onAfterRendering:function(){this._hideShare()},routing:{onAfterBinding:function(){this._hideShare()}}},_hideShare:function(){var e=this.base.getView().byId("fe::Share");if(e&&e.getVisible()){e.unbindProperty("visible");e.setVisible(false)}}})});
+//# sourceMappingURL=ObjectPageExt.controller.js.map

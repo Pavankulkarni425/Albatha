@@ -1,0 +1,5 @@
+code;name;descr
+TT;Telegraphic Transfer;International wire transfer
+CHQ;Cheque;Payment by cheque
+ACH;Bank Transfer (ACH);Local bank transfer
+LC;Letter of Credit;Payment under letter of credit

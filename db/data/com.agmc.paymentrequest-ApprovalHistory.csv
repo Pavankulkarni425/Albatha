@@ -1,0 +1,8 @@
+ID;parent_ID;stepNo;stepName;approverId;approverName;decision;comments;decisionAt;bpaTaskId;bpaWorkflowInstanceId
+8b3c4d5e-0000-4000-8000-000000000001;6f1a2b3c-0000-4000-8000-000000000005;1;Level 1 Approval;l1.approver@agmc.com;Khalid Rahman;Approved;Documents verified;2026-10-10T12:15:00.000Z;task-5-1;9c3d4e5f-0000-4000-8000-000000000005
+8b3c4d5e-0000-4000-8000-000000000002;6f1a2b3c-0000-4000-8000-000000000006;1;Level 1 Approval;l1.approver@agmc.com;Khalid Rahman;Approved;Documents verified;2026-10-12T08:15:00.000Z;task-6-1;9c3d4e5f-0000-4000-8000-000000000006
+8b3c4d5e-0000-4000-8000-000000000003;6f1a2b3c-0000-4000-8000-000000000006;2;Finance Approval;finance.head@agmc.com;Mariam Yousuf;Approved;Approved for payment;2026-10-13T08:15:00.000Z;task-6-2;9c3d4e5f-0000-4000-8000-000000000006
+8b3c4d5e-0000-4000-8000-000000000004;6f1a2b3c-0000-4000-8000-000000000007;1;Level 1 Approval;l1.approver@agmc.com;Khalid Rahman;Approved;Documents verified;2026-10-14T09:15:00.000Z;task-7-1;9c3d4e5f-0000-4000-8000-000000000007
+8b3c4d5e-0000-4000-8000-000000000005;6f1a2b3c-0000-4000-8000-000000000007;2;Finance Approval;finance.head@agmc.com;Mariam Yousuf;Approved;Approved for payment;2026-10-15T09:15:00.000Z;task-7-2;9c3d4e5f-0000-4000-8000-000000000007
+8b3c4d5e-0000-4000-8000-000000000006;6f1a2b3c-0000-4000-8000-000000000008;1;Level 1 Approval;l1.approver@agmc.com;Khalid Rahman;Rejected;Invoice amount does not match PO;2026-10-16T10:15:00.000Z;task-8-1;9c3d4e5f-0000-4000-8000-000000000008
+8b3c4d5e-0000-4000-8000-000000000007;6f1a2b3c-0000-4000-8000-000000000009;1;Level 1 Approval;l1.approver@agmc.com;Khalid Rahman;Return;Bank letter is outdated, please upload a new one;2026-10-18T11:15:00.000Z;task-9-1;9c3d4e5f-0000-4000-8000-000000000009

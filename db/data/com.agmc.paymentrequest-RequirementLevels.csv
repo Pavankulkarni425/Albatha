@@ -1,0 +1,4 @@
+code;name;descr;blocking;criticality
+MANDATORY;Mandatory;Must be uploaded before the workflow can start;true;1
+CONDITIONAL;Conditional;Required only in the case described in the rule (checked by the approver);false;2
+OPTIONAL;Optional;Can be added as supporting information;false;0
