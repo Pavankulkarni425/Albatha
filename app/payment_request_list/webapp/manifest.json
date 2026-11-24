@@ -113,7 +113,8 @@
                             "controlConfiguration": {
                                 "@com.sap.vocabularies.UI.v1.LineItem": {
                                     "tableSettings": {
-                                        "type": "ResponsiveTable"
+                                        "type": "ResponsiveTable",
+                                        "selectionMode": "None"
                                     }
                                 }
                             }
@@ -136,6 +137,17 @@
                                                 "textLinesEdit": 2,
                                                 "textMaxLines": 2
                                             }
+                                        }
+                                    }
+                                }
+                            },
+                            "content": {
+                                "header": {
+                                    "actions": {
+                                        "StartWorkflow": {
+                                            "press": "com.fiori.paymentrequestlist.ext.CustomActions.onStartWorkflow",
+                                            "text": "{i18n>startWorkflow}",
+                                            "visible": "{= ${IsActiveEntity} === true && ${status/editable} === true }"
                                         }
                                     }
                                 }

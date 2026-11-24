@@ -2,12 +2,11 @@
 # Full cycle of ONE payment request (VS Code REST Client — run the steps top to bottom)
 #
 #   CPI creates request  → DOC_PENDING
-#   user uploads docs    → NEW
+#   user uploads docs    → READY
 #   user starts workflow → IN_APPROVAL
 #   BPA level 1 approves → IN_APPROVAL
-#   BPA level 2 approves → APPROVED
-#   CPI: sent to bank    → SENT_TO_BANK
-#   CPI: bank confirms   → SETTLED
+#   BPA level 2 approves → APPROVED → outbox hands it to CPI → SENT_TO_APM ("Approved & Sent to APM")
+#   APM via CPI          → ST-01 … ST-16 (payment document posted … closed), one call per APM message
 #
 # IDs are taken from earlier responses (# @name), nothing to copy by hand.
 # requestId must be unique: change it before running the cycle again on the same database.
@@ -16,6 +15,9 @@
 @server = http://localhost:4004
 @app    = {{server}}/odata/v4/payment-request
 @int    = {{server}}/integration
+# Local mocked users (package.json): alice = PaymentRequester, bob = no role
+@alice  = Basic YWxpY2U6
+@bob    = Basic Ym9iOg==
 
 ### 1. CPI → CAP: create the payment request (status → DOC_PENDING, BTP reference generated)
 # @name create
@@ -33,7 +35,7 @@ Content-Type: application/json
   "companyCode": "1000",
   "costCentre": "CC300",
   "glAccount": "410300",
-  "paymentMethod_code": "TT",
+  "paymentMethod_code": "I",
   "bankName": "Emirates NBD",
   "iban": "AE070260001015678901234",
   "bankAccountNo": "1015678901234",
@@ -42,8 +44,8 @@ Content-Type: application/json
   "requestorEmpId": "E1003",
   "requestCreatedAt": "2026-11-04T07:45:00Z",
   "items": [
-    { "invoiceNumber": "AFE/INV/2026/1182", "invoiceDate": "2026-10-18", "invoiceAmount": 31500.00, "currency_code": "AED" },
-    { "invoiceNumber": "AFE/INV/2026/1207", "invoiceDate": "2026-10-27", "invoiceAmount": 15750.00, "currency_code": "AED" }
+    { "invoiceNumber": "AFE/INV/2026/1182", "invoiceDate": "2026-12-18", "invoiceAmount": 31500.00, "currency_code": "AED" },
+    { "invoiceNumber": "AFE/INV/2026/1207", "invoiceDate": "2026-12-27", "invoiceAmount": 15750.00, "currency_code": "AED" }
   ]
 }
 
@@ -55,10 +57,12 @@ Content-Type: application/json
 
 ### 2. Document checklist → INVOICE, PO, GRN are Mandatory / Pending
 GET {{active}}/checklist?$select=docType_code,level,status
+Authorization: {{alice}}
 
 
 ### 3. Fiori user: Edit (opens a draft)
 POST {{active}}/PaymentRequestService.draftEdit
+Authorization: {{alice}}
 Content-Type: application/json
 
 { "PreserveChanges": true }
@@ -66,12 +70,14 @@ Content-Type: application/json
 ### 4a. Upload Tax Invoice — metadata
 # @name inv
 POST {{draft}}/attachments
+Authorization: {{alice}}
 Content-Type: application/json
 
 { "filename": "AFE-INV-2026-1182.pdf", "mimeType": "application/pdf", "docType_code": "INVOICE" }
 
 ### 4b. Upload Tax Invoice — file content
 PUT {{draft}}/attachments(up__ID={{ID}},ID={{inv.response.body.ID}},IsActiveEntity=false)/content
+Authorization: {{alice}}
 Content-Type: application/pdf
 
 < ./test/sample.pdf
@@ -79,12 +85,14 @@ Content-Type: application/pdf
 ### 5a. Upload Purchase Order — metadata
 # @name po
 POST {{draft}}/attachments
+Authorization: {{alice}}
 Content-Type: application/json
 
 { "filename": "PO-4500098812.pdf", "mimeType": "application/pdf", "docType_code": "PO" }
 
 ### 5b. Upload Purchase Order — file content
 PUT {{draft}}/attachments(up__ID={{ID}},ID={{po.response.body.ID}},IsActiveEntity=false)/content
+Authorization: {{alice}}
 Content-Type: application/pdf
 
 < ./test/sample.pdf
@@ -92,27 +100,36 @@ Content-Type: application/pdf
 ### 6a. Upload Goods Receipt — metadata
 # @name grn
 POST {{draft}}/attachments
+Authorization: {{alice}}
 Content-Type: application/json
 
 { "filename": "GRN-5000041177.pdf", "mimeType": "application/pdf", "docType_code": "GRN" }
 
 ### 6b. Upload Goods Receipt — file content
 PUT {{draft}}/attachments(up__ID={{ID}},ID={{grn.response.body.ID}},IsActiveEntity=false)/content
+Authorization: {{alice}}
 Content-Type: application/pdf
 
 < ./test/sample.pdf
 
-### 7. Fiori user: Save (status → NEW, all mandatory documents present)
+### 7. Fiori user: Save (status → READY, all mandatory documents present)
 POST {{draft}}/PaymentRequestService.draftActivate
+Authorization: {{alice}}
 Content-Type: application/json
 
 {}
 
-### 8. Fiori user: Start Workflow (CAP → BPA; status → IN_APPROVAL, bpaWorkflowInstanceId filled)
+### 8a. Start Workflow button, step 1: all checks, nothing changed → { ok, messages } (pop-up opens only when ok)
+GET {{active}}/PaymentRequestService.startWorkflowCheck()
+Authorization: {{alice}}
+
+### 8b. Pop-up → Send: start the workflow (CAP → BPA; status → IN_APPROVAL) with the optional note for approvers
+#     → history row source REQ, decision Submitted (Resubmitted after a Return), note in comments
 POST {{active}}/PaymentRequestService.startWorkflow
+Authorization: {{alice}}
 Content-Type: application/json
 
-{}
+{ "note": "Urgent: vendor has put the next shipment on hold until this invoice is paid." }
 
 ### 9. BPA → CAP: documents shown to the approver
 POST {{int}}/getAttachedDocuments
@@ -168,27 +185,268 @@ Content-Type: application/json
   "isFinalStep": true
 }
 
-### 12. CPI → CAP: payment sent to the bank (status → SENT_TO_BANK)
+### 12. Check: a few seconds after step 11.2 the outbox has handed the request to CPI → SENT_TO_APM
+GET {{active}}?$select=btpPaymentRef,status_code
+Authorization: {{alice}}
+
+### 13.1. APM → CPI → CAP: payment document posted (ST-01, with payment document number)
 POST {{int}}/updatePaymentStatus
 Content-Type: application/json
 
 {
   "btpPaymentRef": "{{REF}}",
-  "status": "SENT_TO_BANK",
-  "bankPaymentRef": "ENBD-TT-20261128-004517",
-  "statusDate": "2026-11-28"
+  "status": "ST-01",
+  "statusAt": "2026-11-14T09:10:00Z",
+  "paymentDocumentNo": "5100004711"
 }
 
-### 13. CPI → CAP: bank confirms value date (status → SETTLED)
+### 13.2. In tier 1 approval, level 1 of 2 (ST-03)
+POST {{int}}/updatePaymentStatus
+Content-Type: application/json
+
+{ "btpPaymentRef": "{{REF}}", "status": "ST-03", "statusAt": "2026-11-14T09:30:00Z", "level": 1, "levels": 2 }
+
+### 13.3. In tier 1 approval, level 2 of 2 (ST-03 again — next level)
+POST {{int}}/updatePaymentStatus
+Content-Type: application/json
+
+{ "btpPaymentRef": "{{REF}}", "status": "ST-03", "statusAt": "2026-11-14T11:00:00Z", "level": 2, "levels": 2 }
+
+### 13.4. Late message ST-02 (older than ST-03) → kept in history, status stays ST-03
+POST {{int}}/updatePaymentStatus
+Content-Type: application/json
+
+{ "btpPaymentRef": "{{REF}}", "status": "ST-02", "statusAt": "2026-11-14T09:20:00Z" }
+
+### 13.5. Sent to bank (ST-11, with bank reference) → sentToBankAt + bankPaymentRef
 POST {{int}}/updatePaymentStatus
 Content-Type: application/json
 
 {
   "btpPaymentRef": "{{REF}}",
-  "status": "SETTLED",
-  "bankPaymentRef": "ENBD-TT-20261128-004517",
-  "statusDate": "2026-11-30"
+  "status": "ST-11",
+  "statusAt": "2026-11-15T10:00:00Z",
+  "bankReference": "ENBD-TT-20261128-004517"
 }
+
+### 13.6. Same message again (CPI retry) → answered OK, not stored twice
+POST {{int}}/updatePaymentStatus
+Content-Type: application/json
+
+{ "btpPaymentRef": "{{REF}}", "status": "ST-11", "statusAt": "2026-11-15T10:00:00Z", "bankReference": "ENBD-TT-20261128-004517" }
+
+### 13.7. Bank accepted (ST-13)
+POST {{int}}/updatePaymentStatus
+Content-Type: application/json
+
+{ "btpPaymentRef": "{{REF}}", "status": "ST-13", "statusAt": "2026-11-15T12:00:00Z" }
+
+### 13.8. Settled (ST-15) → settledOn
+POST {{int}}/updatePaymentStatus
+Content-Type: application/json
+
+{ "btpPaymentRef": "{{REF}}", "status": "ST-15", "statusAt": "2026-11-16T08:00:00Z" }
+
+### 13.9. Closed (ST-16) — final
+POST {{int}}/updatePaymentStatus
+Content-Type: application/json
+
+{ "btpPaymentRef": "{{REF}}", "status": "ST-16", "statusAt": "2026-11-16T09:00:00Z" }
+
+### 13.10. Message after Closed → logged in history only, status stays ST-16
+POST {{int}}/updatePaymentStatus
+Content-Type: application/json
+
+{ "btpPaymentRef": "{{REF}}", "status": "ST-14", "statusAt": "2026-11-16T10:00:00Z", "message": "late bank message" }
+
+### 13.11. Error: unknown status → 400
+POST {{int}}/updatePaymentStatus
+Content-Type: application/json
+
+{ "btpPaymentRef": "{{REF}}", "status": "SETTLED", "statusAt": "2026-11-16T10:00:00Z" }
+
+# Rejections (ST-04 Rejected at tier 1, ST-09 Rejected, ST-14 Bank rejected) are final as well:
+# send e.g. { "status": "ST-09", "statusAt": "…", "message": "Invoice amount does not match PO" } on another request.
 
 ### 14. Final check: status, bank data, approval history, attachments
-GET {{active}}?$select=btpPaymentRef,requestId,status_code,approvalLevel,bpaWorkflowInstanceId,bankPaymentRef,sentToBankAt,settledOn&$expand=items,approvalHistory($select=stepNo,stepName,approverName,decision,comments,decisionAt),attachments($select=filename,docType_code)
+GET {{active}}?$select=btpPaymentRef,requestId,status_code,approvalLevel,bpaWorkflowInstanceId,paymentDocumentNo,bankPaymentRef,sentToBankAt,settledOn,apmLevelText&$expand=items,approvalHistory($select=source,stepNo,stepName,approverName,decision,comments,reference,decisionAt;$orderby=decisionAt),attachments($select=filename,docType_code)
+Authorization: {{alice}}
+
+
+##############################################################################################
+# Create a payment request in the Fiori app (source BTP) — draft calls as sent by Fiori elements
+#
+#   alice (role PaymentRequester) creates a draft → defaults: BTP, 1000, AED, VENDOR_PAYMENT (no payment method)
+#   vendor selected      → vendor name filled (bank is chosen independently)
+#   bank account picked  → IBAN, account no, SWIFT (read-only) copied from the account
+#   invoices added       → payment amount = sum of the invoices
+#   new draft            → status DRAFT; Documents, Attachments, History sections hidden
+#   Save                 → btpPaymentRef generated, requestId = btpPaymentRef, status DOC_PENDING
+#   checklist            → matrix documents + Vendor Bank Letter (mandatory for BTP requests)
+#
+# Local mocked users (package.json): alice = PaymentRequester, bob = no role.
+# Invoice numbers must be unique per vendor: change them before running the cycle again.
+##############################################################################################
+
+
+### B1. alice: new draft
+# @name btpNew
+POST {{app}}/PaymentRequests
+Authorization: {{alice}}
+Content-Type: application/json
+
+{}
+
+###
+@BID    = {{btpNew.response.body.ID}}
+@bdraft = {{app}}/PaymentRequests(ID={{BID}},IsActiveEntity=false)
+@bactive = {{app}}/PaymentRequests(ID={{BID}},IsActiveEntity=true)
+
+### B2. Select the vendor → vendor name filled
+PATCH {{bdraft}}
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "vendorCode": "V1002" }
+
+### B3. Pick a bank account in the Bank Name value help (sends the account ID; bank name, IBAN, account no, SWIFT follow)
+#      → IBAN, account no, SWIFT copied from the account (any vendor's account, no vendor filter for now)
+PATCH {{bdraft}}
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "bankAccount_ID": "c1000000-0000-4000-8000-000000000003" }
+
+### B4. Remaining mandatory fields (payment method I / H / S — no default)
+PATCH {{bdraft}}
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "paymentMethod_code": "H", "requestorEmpId": "E2001", "costCentre": "CC100", "glAccount": "400100" }
+
+### B5. Invoice 1
+POST {{bdraft}}/items
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "invoiceNumber": "ANT/INV/2026/501", "invoiceDate": "2026-12-01", "invoiceAmount": 1200.50 }
+
+### B6. Invoice 2
+POST {{bdraft}}/items
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "invoiceNumber": "ANT/INV/2026/502", "invoiceDate": "2026-12-05", "invoiceAmount": 799.50 }
+
+### B7. Draft check → paymentAmount 2000.00, bank Emirates NBD, source BTP
+GET {{bdraft}}?$select=source,vendorName,paymentAmount,currency_code,bankName,iban,swiftCode,status_code
+Authorization: {{alice}}
+
+### B8. Save → btpPaymentRef = requestId, requestCreatedAt set, status DOC_PENDING
+POST {{bdraft}}/PaymentRequestService.draftActivate
+Authorization: {{alice}}
+Content-Type: application/json
+
+{}
+
+### B9. Checklist → includes Vendor Bank Letter (Mandatory, Pending)
+GET {{bactive}}/checklist?$select=docType_code,level,status
+Authorization: {{alice}}
+
+### B10. Start Workflow without documents → 400, lists the missing documents incl. the bank letter
+POST {{bactive}}/PaymentRequestService.startWorkflow
+Authorization: {{alice}}
+Content-Type: application/json
+
+{}
+
+# ---------- Negative tests ----------
+
+### N1. bob (no PaymentRequester role) cannot create → 403
+#     (TEMPORARY: create/delete are open to all logged-in users — currently 201; 403 again after the revert)
+POST {{app}}/PaymentRequests
+Authorization: {{bob}}
+Content-Type: application/json
+
+{}
+
+### N2. bob cannot delete → 403 (TEMPORARY: currently allowed, see N1)
+DELETE {{bactive}}
+Authorization: {{bob}}
+
+### N3. Validation on Save: draft with past due date, invoice in another currency, no employee ID
+# @name badNew
+POST {{app}}/PaymentRequests
+Authorization: {{alice}}
+Content-Type: application/json
+
+{}
+
+###
+@bad = {{app}}/PaymentRequests(ID={{badNew.response.body.ID}},IsActiveEntity=false)
+
+PATCH {{bad}}
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "vendorCode": "V1001" }
+
+###
+PATCH {{bad}}
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "paymentDueDate": "2026-01-01", "iban": "AE000000000000000000000" }
+# ↑ iban is read-only: CAP ignores it (bank fields only come from the picked bank account)
+
+###
+POST {{bad}}/items
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "invoiceNumber": "ANT/INV/2026/501", "invoiceAmount": 10, "currency_code": "USD" }
+
+### N3 Save → 400 with several messages: employee ID, cost centre, GL account, due date, currency, bank details missing
+POST {{bad}}/PaymentRequestService.draftActivate
+Authorization: {{alice}}
+Content-Type: application/json
+
+{}
+
+### N3 cleanup: discard the draft
+DELETE {{bad}}
+Authorization: {{alice}}
+
+### N4. KLD request (from step 1): header cannot be changed → 403 on PATCH
+POST {{active}}/PaymentRequestService.draftEdit
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "PreserveChanges": true }
+
+###
+PATCH {{draft}}
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "vendorCode": "V1001" }
+
+### N4 Invoices of a KLD request cannot be added → 403
+POST {{draft}}/items
+Authorization: {{alice}}
+Content-Type: application/json
+
+{ "invoiceNumber": "X-1", "invoiceAmount": 1 }
+
+### N4 cleanup: discard the draft
+DELETE {{draft}}
+Authorization: {{alice}}
+
+### N5. KLD request cannot be deleted → 403
+DELETE {{active}}
+Authorization: {{alice}}
+
+### N6. BTP request after workflow start cannot be deleted → 409 (run after documents + Start Workflow);
+#      before that, alice may delete it → 204
+DELETE {{bactive}}
+Authorization: {{alice}}

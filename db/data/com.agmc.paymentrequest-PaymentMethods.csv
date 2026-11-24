@@ -1,5 +1,4 @@
 code;name;descr
-TT;Telegraphic Transfer;International wire transfer
-CHQ;Cheque;Payment by cheque
-ACH;Bank Transfer (ACH);Local bank transfer
-LC;Letter of Credit;Payment under letter of credit
+I;Dubai Islamic Bank (DIB);Payment from AGMC's account at Dubai Islamic Bank (account determined in S/4)
+H;HSBC;Payment from AGMC's account at HSBC (account determined in S/4)
+S;Standard Chartered Bank (SCB);Payment from AGMC's account at Standard Chartered Bank (account determined in S/4)

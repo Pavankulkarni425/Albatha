@@ -1,7 +1,8 @@
 import cds from '@sap/cds'
+import { markSentToApm } from './lib/apm-status.js'
 const LOG = cds.log('bank-transfer')
 
-// CPI endpoint (iFlow) that forwards the payment to MBC — NOT built yet (placeholder path).
+// KLD | BTPendpoint (iFlow) that forwards the payment to MBC — NOT built yet (placeholder path).
 // Do not point this at /http/BTP/PaymentRequest: that is the inbound CREATE iFlow (→ CAP).
 const CPI_PAYMENT_PATH = '/http/agmc/payments'
 
@@ -11,7 +12,8 @@ export default class BankTransferService extends cds.ApplicationService {
 
     /**
      * Runs in the background from the outbox, after the final approval is committed.
-     * Success → status SENT_TO_BANK with the bank reference.
+     * Success → status SENT_TO_APM ("Approved & Sent to APM") + history row; APM then reports
+     *           its progress (ST-01 … ST-16) via IntegrationService.updatePaymentStatus.
      * Error   → thrown: the queue retries later (temporary errors) or stops (4xx from CPI).
      */
     this.on('sendPayment', async req => {
@@ -23,10 +25,11 @@ export default class BankTransferService extends cds.ApplicationService {
 
       // btpPaymentRef is the unique payment ID: CPI/MBC must reject a second payment with the same value
       const payload = {
-        btpPaymentRef: pr.btpPaymentRef, requestId: pr.requestId,
+        btpPaymentRef: pr.btpPaymentRef, requestId: pr.requestId, source: pr.source,  // KLD | BTP| BTP
         paymentType: pr.paymentType_code, companyCode: pr.companyCode,
         vendorCode: pr.vendorCode, vendorName: pr.vendorName,
         paymentAmount: Number(pr.paymentAmount), currency: pr.currency_code,
+        // payment method I / H / S: S/4 determines the AGMC house bank account from it
         paymentDueDate: pr.paymentDueDate, paymentMethod: pr.paymentMethod_code,
         bankName: pr.bankName, iban: pr.iban, bankAccountNo: pr.bankAccountNo, swiftCode: pr.swiftCode,
         costCentre: pr.costCentre, glAccount: pr.glAccount,
@@ -49,12 +52,8 @@ export default class BankTransferService extends cds.ApplicationService {
         throw e
       }
 
-      await UPDATE(PaymentRequests, pr.ID).with({
-        status_code:    'SENT_TO_BANK',
-        bankPaymentRef: result?.bankPaymentRef ?? null,
-        sentToBankAt:   new Date().toISOString()
-      })
-      LOG.info(`${pr.btpPaymentRef}: sent to bank via CPI (ref ${result?.bankPaymentRef ?? '-'})`)
+      await markSentToApm(pr.ID, result?.reference ?? result?.messageId)
+      LOG.info(`${pr.btpPaymentRef}: handed over to APM via CPI`)
     })
 
     return super.init()

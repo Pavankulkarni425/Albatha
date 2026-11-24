@@ -32,6 +32,9 @@ annotate db.PaymentRequests with @title: '{i18n>PaymentRequest}' {
     workflowMessage       @title: '{i18n>workflowMessage}';
     currentApprover       @title: '{i18n>currentApprover}';
     approvalLevel         @title: '{i18n>approvalLevel}';
+    paymentDocumentNo     @title: '{i18n>paymentDocumentNo}';
+    apmLevel              @title: '{i18n>apmLevel}';
+    apmLevels             @title: '{i18n>apmLevels}';
     items                 @title: '{i18n>items}';
     approvalHistory       @title: '{i18n>approvalHistory}';
     attachments           @title: '{i18n>attachments}';
@@ -41,7 +44,7 @@ annotate db.PaymentRequestItems with @title: '{i18n>PaymentRequestItem}' {
     ID            @UI.Hidden;
     parent        @UI.Hidden;
     invoiceNumber @title: '{i18n>invoiceNumber}';
-    invoiceDate   @title: '{i18n>invoiceDate}';
+    invoiceDate   @title: '{i18n>invoiceDueDate}';   // field name kept (CPI contract), shown as Invoice Due Date
     invoiceAmount @title: '{i18n>invoiceAmount}' @Measures.ISOCurrency: currency_code;
     currency      @title: '{i18n>currency}';
 };
@@ -49,12 +52,14 @@ annotate db.PaymentRequestItems with @title: '{i18n>PaymentRequestItem}' {
 annotate db.ApprovalHistory with @title: '{i18n>ApprovalHistoryItem}' {
     ID                    @UI.Hidden;
     parent                @UI.Hidden;
+    source                @title: '{i18n>historySource}';
     stepNo                @title: '{i18n>stepNo}';
     stepName              @title: '{i18n>stepName}';
     approverId            @title: '{i18n>approverId}';
     approverName          @title: '{i18n>approverName}';
     decision              @title: '{i18n>decision}';
     comments              @title: '{i18n>comments}';
+    reference             @title: '{i18n>historyReference}';
     decisionAt            @title: '{i18n>decisionAt}';
     bpaTaskId             @title: '{i18n>bpaTaskId}';
     bpaWorkflowInstanceId @title: '{i18n>bpaWorkflowInstanceId}';

@@ -6,6 +6,10 @@
     {
       "name": "uaa.user",
       "description": "UAA"
+    },
+    {
+      "name": "$XSAPPNAME.PaymentRequester",
+      "description": "Create and delete payment requests in the Fiori app"
     }
   ],
   "role-templates": [
@@ -15,6 +19,13 @@
       "scope-references": [
         "uaa.user"
       ]
+    },
+    {
+      "name": "PaymentRequester",
+      "description": "Create and delete payment requests in the Fiori app",
+      "scope-references": [
+        "$XSAPPNAME.PaymentRequester"
+      ]
     }
   ],
   "attributes": [],
@@ -23,6 +34,14 @@
       "name": "AGMC_PaymentRequest_User",
       "description": "Payment request users incl. document access",
       "role-template-references": [
+        "$XSSERVICENAME(agmc-payment-request-mgmt-sdm).SDM_User"
+      ]
+    },
+    {
+      "name": "AGMC_PaymentRequest_Requester",
+      "description": "Payment request users who may also create requests in the app (incl. document access)",
+      "role-template-references": [
+        "$XSAPPNAME.PaymentRequester",
         "$XSSERVICENAME(agmc-payment-request-mgmt-sdm).SDM_User"
       ]
     }

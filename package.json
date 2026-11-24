@@ -5,10 +5,12 @@
   "dependencies": {
     "@cap-js/postgres": "^3",
     "@cap-js/sdm": "^1.11.0",
+    "@sap-cloud-sdk/connectivity": "^4.10.0",
     "@sap-cloud-sdk/http-client": "^4.9.1",
     "@sap-cloud-sdk/resilience": "^4.9.1",
     "@sap/cds": "^10",
-    "@sap/xssec": "^4"
+    "@sap/xssec": "^4",
+    "nodemailer": "^6.10.1"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^3",
@@ -55,7 +57,29 @@
           }
         }
       },
+      "notificationMail": {
+        "destination": "AGMC_PAYMENT_REQUEST_MAIL",
+        "from": "AGMC Payment Requests <pavan.kulkarni425@gmail.com>",
+        "to": "pavan.kulkarni425@gmail.com",
+        "[development]": {
+          "kind": "log"
+        }
+      },
       "[development]": {
+        "auth": {
+          "kind": "mocked",
+          "impl": "srv/lib/dev-auth.js",
+          "users": {
+            "alice": {
+              "roles": [
+                "PaymentRequester"
+              ]
+            },
+            "bob": {
+              "roles": []
+            }
+          }
+        },
         "attachments": {
           "kind": "db",
           "impl": "@cap-js/attachments/srv/attachments/basic",

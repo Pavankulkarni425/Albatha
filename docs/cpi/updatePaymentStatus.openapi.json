@@ -1,0 +1,137 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "AGMC Payment Request - APM Payment Status",
+    "version": "1.0.0",
+    "description": "CPI -> CAP IntegrationService. CPI calls this once per APM status message (ST-01 ... ST-16) after the approved payment request was handed over to APM. CPI maps the APM message format into these fields; CAP expects exactly this structure. Authentication: OAuth2 client credentials of the CAP XSUAA instance (same as the inbound create call).\n\nProcessing in CAP:\n- Forward only by status order; a message that arrives late is stored in the history but does not move the status back (HTTP 200, returns the unchanged status).\n- Rejections ST-04, ST-09, ST-14 apply at any time and are final; ST-16 Closed is final. Messages after a final status are only logged (HTTP 200).\n- The same message twice (same btpPaymentRef, status, statusAt and level) is answered with HTTP 200 and not stored again, so retries are safe.\n- 4xx errors mean the message cannot be processed (do not retry unchanged)."
+  },
+  "servers": [
+    {
+      "url": "/integration"
+    }
+  ],
+  "paths": {
+    "/updatePaymentStatus": {
+      "post": {
+        "operationId": "updatePaymentStatus",
+        "summary": "Report one APM payment status to CAP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "btpPaymentRef",
+                  "status",
+                  "statusAt"
+                ],
+                "properties": {
+                  "btpPaymentRef": {
+                    "type": "string",
+                    "description": "Payment request reference sent to APM, e.g. BTP-PR-2026-000022"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "APM status code",
+                    "enum": [
+                      "ST-01", "ST-02", "ST-03", "ST-04", "ST-05", "ST-06", "ST-07", "ST-08",
+                      "ST-09", "ST-10", "ST-11", "ST-12", "ST-13", "ST-14", "ST-15", "ST-16"
+                    ]
+                  },
+                  "statusAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date/time of the status in APM (ISO 8601, e.g. 2026-11-14T09:10:00Z)"
+                  },
+                  "level": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 1,
+                    "description": "Only for ST-03 / ST-08: current approval level n"
+                  },
+                  "levels": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 1,
+                    "description": "Only for ST-03 / ST-08: number of approval levels N"
+                  },
+                  "paymentDocumentNo": {
+                    "type": "string",
+                    "maxLength": 35,
+                    "description": "Payment document number from APM / EBS, if known (e.g. with ST-01)"
+                  },
+                  "bankReference": {
+                    "type": "string",
+                    "maxLength": 35,
+                    "description": "Bank reference of the transfer, if known (e.g. with ST-11 / ST-13)"
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "APM message, e.g. the rejection reason with ST-04 / ST-09 / ST-14"
+                  }
+                }
+              },
+              "examples": {
+                "documentPosted": {
+                  "value": {
+                    "btpPaymentRef": "BTP-PR-2026-000022",
+                    "status": "ST-01",
+                    "statusAt": "2026-11-14T09:10:00Z",
+                    "paymentDocumentNo": "5100004711"
+                  }
+                },
+                "tier1Approval": {
+                  "value": {
+                    "btpPaymentRef": "BTP-PR-2026-000022",
+                    "status": "ST-03",
+                    "statusAt": "2026-11-14T09:30:00Z",
+                    "level": 1,
+                    "levels": 2
+                  }
+                },
+                "bankRejected": {
+                  "value": {
+                    "btpPaymentRef": "BTP-PR-2026-000022",
+                    "status": "ST-14",
+                    "statusAt": "2026-11-15T12:30:00Z",
+                    "bankReference": "ENBD-TT-20261128-004517",
+                    "message": "Invalid IBAN"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Processed. value = status code of the payment request after the call (unchanged if the message arrived late, was a duplicate, or the request is already final)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "example": "ST-03"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid message: unknown status, missing btpPaymentRef or statusAt, invalid level"
+          },
+          "404": {
+            "description": "Payment request not found"
+          },
+          "409": {
+            "description": "Payment request is not approved yet (APM messages are only accepted after the BPA approval)"
+          }
+        }
+      }
+    }
+  }
+}

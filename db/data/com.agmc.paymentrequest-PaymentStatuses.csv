@@ -1,10 +1,25 @@
 code;name;descr;criticality;editable;sequence
-NEW;Ready;All mandatory documents available, ready to start the workflow;0;true;10
+DRAFT;Draft;New request, not saved yet;0;true;5
+READY;Ready;All mandatory documents available, ready to start the workflow;0;true;10
 DOC_PENDING;Document Pending;Mandatory documents are missing;2;true;20
 IN_APPROVAL;In Approval;Approval workflow is running;2;false;30
 RETURN;Return;Sent back by an approver for correction;1;true;40
 APPROVED;Approved;All approval levels completed;3;false;50
-SENT_TO_BANK;Sent to Bank;Payment transmitted to the bank;2;false;60
-SETTLED;Settled;Payment confirmed by the bank;5;false;70
-REJECTED;Rejected;Rejected by an approver (to be confirmed with client);1;false;80
+SENT_TO_APM;Approved & Sent to APM;Approved and handed over to APM via CPI;2;false;55
+ST-01;Payment document posted;APM: payment document posted;2;false;61
+ST-02;Tier 1 batch created;APM: tier 1 batch created;2;false;62
+ST-03;In tier 1 approval (level n of N);APM: in tier 1 approval;2;false;63
+ST-04;Rejected at tier 1;APM: rejected at tier 1 (final);1;false;64
+ST-05;Handed to PAE;APM: handed to PAE;2;false;65
+ST-06;In PAE;APM: received by PAE;2;false;66
+ST-07;In PAE;APM: in PAE processing / routed;2;false;67
+ST-08;In PAE approval;APM: in PAE approval;2;false;68
+ST-09;Rejected;APM: rejected by PAE (final);1;false;69
+ST-10;In PAE approved;APM: PAE released;2;false;70
+ST-11;Sent to bank;APM: sent to bank;2;false;71
+ST-12;Sent to bank;APM: bank acknowledged (ACK);2;false;72
+ST-13;Accepted;APM: bank accepted (ACSC);3;false;73
+ST-14;Bank rejected;APM: bank rejected (NACK / RJCT) (final);1;false;74
+ST-15;Settled;APM: cleared in entity (EBS);3;false;75
+ST-16;Closed;APM: closed (final);3;false;76
 WF_ERROR;Workflow Error;Workflow could not be started - retry possible;1;true;90

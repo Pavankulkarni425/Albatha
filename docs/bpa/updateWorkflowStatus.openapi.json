@@ -1,0 +1,102 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "AGMC Payment Request - Workflow Callback",
+    "version": "1.0.0",
+    "description": "BPA -> CAP IntegrationService. Use with destination AGMC_PAYMENT_REQUEST_CAP (URL ends with /integration)."
+  },
+  "servers": [
+    {
+      "url": "/integration"
+    }
+  ],
+  "paths": {
+    "/updateWorkflowStatus": {
+      "post": {
+        "operationId": "updateWorkflowStatus",
+        "summary": "Report an approval decision to CAP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "btpPaymentRef",
+                  "stepNo",
+                  "decision"
+                ],
+                "properties": {
+                  "btpPaymentRef": {
+                    "type": "string",
+                    "description": "Payment request reference, e.g. BTP-PR-2026-000001 (process input bTP_PRN_ID)"
+                  },
+                  "stepNo": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Approval level, 1 = first approval"
+                  },
+                  "stepName": {
+                    "type": "string",
+                    "description": "e.g. Finance Approval"
+                  },
+                  "approverId": {
+                    "type": "string",
+                    "description": "Approver user ID / email (task processor)"
+                  },
+                  "approverName": {
+                    "type": "string",
+                    "description": "Approver display name"
+                  },
+                  "decision": {
+                    "type": "string",
+                    "description": "Approved | Return (BPA has no final rejection; Rejected / Sent Back are accepted and handled as Return)"
+                  },
+                  "comments": {
+                    "type": "string",
+                    "description": "Approver comment (form output 'comment')"
+                  },
+                  "bpaTaskId": {
+                    "type": "string",
+                    "description": "BPA task instance ID"
+                  },
+                  "isFinalStep": {
+                    "type": "boolean",
+                    "description": "true = last approval level -> status APPROVED and bank transfer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New status code of the payment request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "description": "APPROVED | IN_APPROVAL | RETURN | REJECTED"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown decision"
+          },
+          "404": {
+            "description": "Payment request not found"
+          },
+          "409": {
+            "description": "Payment request is not in approval"
+          }
+        }
+      }
+    }
+  }
+}

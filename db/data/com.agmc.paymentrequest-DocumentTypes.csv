@@ -7,3 +7,4 @@ APG;Bank Guarantee / LC;Bank guarantee or letter of credit;pdf;15
 CONTRACT;Contract Reference;Contract or agreement with the vendor (advance payments);pdf;15
 DECLARATION;Requestor Declaration / Certification;Declaration or certification by the requestor;pdf;5
 OTHER;Other Supporting Document;Any other supporting document;pdf,jpg,png,xlsx;10
+BANK_LETTER;Vendor Bank Letter;Letter from the bank (or vendor letterhead) confirming the vendor bank account;pdf;10
